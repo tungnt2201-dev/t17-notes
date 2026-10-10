@@ -1,0 +1,55 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cài Android SDK platform 34
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+
+      - name: Lấy khóa ký từ Secrets (nếu có)
+        env:
+          KS_B64: ${{ secrets.T17_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/t17.jks"; echo "KEYSTORE_FILE=$RUNNER_TEMP/t17.jks" >> "$GITHUB_ENV"; fi
+
+      - name: Build APK
+        env:
+          KEYSTORE_PASS: ${{ secrets.T17_KEYSTORE_PASS }}
+          KEY_ALIAS: t17
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export VERSION_CODE=$((VERSION_CODE + 2))
+          export VERSION_NAME="2.0.$VERSION_CODE"
+          [[ "$GITHUB_REF" == refs/tags/v* ]] && export VERSION_NAME="${GITHUB_REF_NAME#v}"
+          bash android/build.sh
+          ls -la android/build/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: T17Notes-apk
+          path: android/build/T17Notes-*.apk
+
+      - name: Tạo Release (khi đẩy tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/build/T17Notes-*.apk
