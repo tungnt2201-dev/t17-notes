@@ -27,7 +27,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 svg{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 [hidden]{display:none !important}
-#app{height:100%;max-width:640px;margin:0 auto;position:relative;background:var(--bg);box-shadow:0 0 0 1px var(--border)}
+#app{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);max-width:640px;margin:0 auto;background:var(--bg);box-shadow:0 0 0 1px var(--border)}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg)}
 #scrEditor{z-index:10}
 
@@ -113,7 +113,7 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px}
 
 /* ---------- trình soạn ---------- */
 .ed-status{font-size:12.5px;color:var(--muted);flex:1;text-align:center}
-.ed-body{flex:1;overflow:auto;padding:4px 18px calc(var(--safe-b) + 90px)}
+.ed-body{flex:1;min-height:0;overflow:auto;padding:4px 18px 40px;scroll-padding-bottom:40px}
 .ed-title{width:100%;border:0;background:none;font-size:24px;font-weight:700;letter-spacing:-.02em;padding:6px 0;outline:none}
 .ed-title:focus{box-shadow:none}
 .ed-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0 12px;border-bottom:1px solid var(--border);margin-bottom:12px}
@@ -123,7 +123,7 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px}
 .ed-date{width:100%;font-size:11.5px;color:var(--faint)}
 .ed-text{width:100%;min-height:60vh;border:0;background:none;resize:none;outline:none;font-size:var(--fs);line-height:1.7;padding:0}
 .ed-text:focus{box-shadow:none}
-.fmt{position:absolute;left:0;right:0;bottom:0;display:flex;gap:2px;padding:6px 8px calc(var(--safe-b) + 6px);background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none;z-index:4}
+.fmt{flex:none;position:relative;display:flex;gap:2px;padding:6px 8px calc(var(--safe-b) + 6px);background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none;z-index:4}
 .fmt::-webkit-scrollbar{display:none}
 .fmt button{flex:none;min-width:44px;height:40px;border:0;border-radius:10px;background:none;font-weight:700;display:grid;place-items:center;padding:0 8px}
 .fmt button:active{background:var(--surface-2)}
@@ -143,7 +143,21 @@ mark{background:var(--accent-soft);color:inherit;border-radius:3px}
 .md pre{background:var(--surface-2);padding:10px 12px;border-radius:10px;overflow:auto}
 .md pre code{background:none;padding:0}
 .md hr{border:0;border-top:1px solid var(--border);margin:1em 0}
-.md a{color:var(--accent)}
+.md a{color:var(--accent);word-break:break-word}
+.md h4,.md h5,.md h6{margin:.5em 0 .2em;font-size:1em}
+.md h6{color:var(--muted)}
+.md img{max-width:100%;height:auto;border-radius:10px;display:block;margin:.4em 0;cursor:zoom-in;background:var(--surface-2);min-height:40px}
+.md .tbl{overflow-x:auto;margin:.5em 0}
+.md table{border-collapse:collapse;font-size:.95em;min-width:60%}
+.md th,.md td{border:1px solid var(--border-strong);padding:5px 10px;vertical-align:top}
+.md th{background:var(--surface-2);font-weight:700}
+.md a.att{display:inline-flex;gap:4px;align-items:center;background:var(--surface-2);padding:1px 8px;border-radius:8px;text-decoration:none}
+.ed-atts{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 4px;border-top:1px dashed var(--border);margin-top:14px}
+.ed-atts:empty{display:none}
+.ed-atts .chip{height:32px;font-size:12.5px;max-width:100%}
+.ed-atts .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+#imgBox{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.92);display:grid;place-items:center;padding:12px}
+#imgBox img{max-width:100%;max-height:100%;object-fit:contain}
 .md blockquote{margin:.3em 0;padding-left:12px;border-left:3px solid var(--border-strong);color:var(--muted)}
 
 /* ---------- đọc file ---------- */
@@ -475,6 +489,7 @@ mark.flash{background:var(--accent-soft);color:inherit;border-radius:3px;box-sha
       </div>
       <textarea class="ed-text" id="edText" placeholder="Viết ghi chú…&#10;&#10;Mẹo: “- [ ] ” tạo việc cần làm, “# ” tạo tiêu đề, **đậm**, *nghiêng*"></textarea>
       <div class="md" id="edView" hidden></div>
+      <div class="ed-atts" id="edAtts"></div>
     </div>
     <div class="fmt" id="fmtBar">
       <button data-f="todo" title="Việc cần làm"><svg><use href="#i-check"/></svg></button>
@@ -486,6 +501,11 @@ mark.flash{background:var(--accent-soft);color:inherit;border-radius:3px;box-sha
       <button data-f="s" title="Gạch ngang"><s>S</s></button>
       <button data-f="q" title="Trích dẫn">❝</button>
       <button data-f="hr" title="Đường kẻ">―</button>
+      <button data-f="img" title="Chèn ảnh">🖼</button>
+      <button data-f="file" title="Đính kèm tệp">📎</button>
+      <button data-f="table" title="Chèn bảng">▦</button>
+      <button data-f="link" title="Chèn liên kết">🔗</button>
+      <button data-f="code" title="Mã">&lt;/&gt;</button>
       <button data-f="date" title="Chèn ngày giờ">🕒</button>
     </div>
   </section>
@@ -550,6 +570,7 @@ mark.flash{background:var(--accent-soft);color:inherit;border-radius:3px;box-sha
 </section>
 
 <input type="file" id="fileInput" multiple hidden>
+<div id="imgBox" hidden><img alt=""></div>
 <div id="layer"></div>
 <div class="toast" id="toast"></div>
 
@@ -739,47 +760,94 @@ function persist() { saveChain = saveChain.then(() => vault.unlocked && vault.sa
 function welcomeNote(nb) {
   const now = Date.now();
   return { id: uid(), title: "Chào mừng đến T17 Notes", notebook: nb, tags: ["hướng dẫn"], pinned: true, created: now, updated: now, deleted: null,
-    body: "Mọi ghi chú đều được **mã hóa** trên máy bằng mật khẩu của bạn.\n\n## Viết nhanh\n- [x] Tạo sổ ghi chú\n- [ ] Viết ghi chú đầu tiên\n- [ ] Sao lưu trong phần Cài đặt\n\nGõ `- [ ] ` để tạo việc cần làm, `# ` cho tiêu đề, **đậm**, *nghiêng*, ~~gạch~~.\n\n> Mẹo: tìm kiếm không cần gõ dấu — “ha noi” vẫn ra “Hà Nội”." };
+    body: "Mọi ghi chú đều được **mã hóa** trên máy bằng mật khẩu của bạn.\n\n## Viết nhanh\n- [x] Tạo sổ ghi chú\n- [ ] Viết ghi chú đầu tiên\n- [ ] Sao lưu trong phần Cài đặt\n\nGõ `- [ ] ` để tạo việc cần làm, `# ` cho tiêu đề, **đậm**, *nghiêng*, ~~gạch~~. Thanh công cụ có nút chèn ảnh 🖼, đính kèm 📎, bảng ▦, liên kết 🔗 — tất cả đều được mã hóa.\n\n> Mẹo: tìm kiếm không cần gõ dấu — “ha noi” vẫn ra “Hà Nội”." };
 }
 
 /* ============================ MARKDOWN RÚT GỌN ============================ */
-function inlineMd(s) {
-  s = esc(s);
-  s = s.replace(/`([^`]+)`/g, "<code>$1</code>")
-       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
-       .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<i>$2</i>")
-       .replace(/~~([^~]+)~~/g, "<s>$1</s>")
-       .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-  return s;
+const safeHref = u => /^(https?:|mailto:|tel:|#)/i.test(u) ? u : null;
+function inlineMd(src, opt = {}) {
+  const tok = [];
+  const keep = h => "\u0000" + (tok.push(h) - 1) + "\u0000";
+  let t = String(src)
+    .replace(/`([^`]+)`/g, (m, c) => keep(`<code>${esc(c)}</code>`))
+    .replace(/!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\)/g, (m, alt, u) => {
+      const at = /^att:([\w-]+)$/.exec(u);
+      if (at) { const url = opt.att && opt.att(at[1]); return keep(url ? `<img src="${esc(url)}" alt="${esc(alt)}">` : `<img data-att="${esc(at[1])}" alt="${esc(alt)}">`); }
+      if (/^(data:image\/|blob:)/i.test(u)) return keep(`<img src="${esc(u)}" alt="${esc(alt)}">`);
+      const h = safeHref(u);                       // ảnh trên mạng bị chặn (không kết nối mạng) → hiện thành liên kết
+      return keep(h ? `<a href="${esc(h)}" target="_blank" rel="noopener noreferrer">🖼 ${esc(alt || h)}</a>` : esc(m));
+    })
+    .replace(/\[([^\]]+)\]\(\s*([^)\s]+)\s*\)/g, (m, txt, u) => {
+      const at = /^att:([\w-]+)$/.exec(u);
+      if (at) { const url = opt.att && opt.att(at[1]); return keep(`<a class="att" ${url ? `href="${esc(url)}" download="${esc(opt.attName ? opt.attName(at[1]) : txt)}"` : `href="#" data-att="${esc(at[1])}"`}>${esc(txt)}</a>`); }
+      const h = safeHref(u);
+      return h ? keep(`<a href="${esc(h)}" target="_blank" rel="noopener noreferrer">${inlineMd(txt)}</a>`) : esc(m);
+    })
+    .replace(/<?(https?:\/\/[^\s<>()]+[^\s<>().,;:!?'"])>?/g, (m, u) => keep(`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>`));
+  t = esc(t)
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/__([^_]+)__/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<i>$2</i>")
+    .replace(/~~([^~]+)~~/g, "<s>$1</s>")
+    .replace(/==([^=]+)==/g, "<mark>$1</mark>");
+  return t.replace(/\u0000(\d+)\u0000/g, (m, i) => tok[+i]);
 }
-function renderMd(src) {
+const TBL_SEP = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+const splitRow = l => { let r = l.trim(); if (r.startsWith("|")) r = r.slice(1); if (r.endsWith("|") && !r.endsWith("\\|")) r = r.slice(0, -1); return r.split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, "|")); };
+function renderMd(src, opt = {}) {
   const lines = String(src).split(/\r?\n/);
-  let html = "", list = null, code = null;
-  const close = () => { if (list) { html += `</${list}>`; list = null; } };
-  const open = t => { if (list !== t) { close(); html += `<${t}>`; list = t; } };
-  lines.forEach((line, i) => {
-    if (/^```/.test(line)) { if (code) { html += `<pre><code>${esc(code.join("\n"))}</code></pre>`; code = null; } else { close(); code = []; } return; }
-    if (code) { code.push(line); return; }
+  let html = "", lists = [];
+  const closeLists = (lvl = -1) => { while (lists.length && lists.length - 1 > lvl) html += `</${lists.pop()}>`; };
+  const openList = (t, lvl) => {
+    closeLists(lvl);
+    if (lists.length - 1 === lvl && lists[lvl] !== t) closeLists(lvl - 1);
+    while (lists.length <= lvl) { html += `<${t}${lists.length ? ' class="sub"' : ""}>`; lists.push(t); }
+  };
+  const indent = sp => Math.floor(sp.replace(/\t/g, "  ").length / 2);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     let m;
-    if ((m = line.match(/^\s*[-*+] \[( |x|X)\] ?(.*)$/))) {
-      open("ul"); const done = m[1] !== " ";
-      html += `<li class="todo${done ? " done" : ""}"><input type="checkbox" data-line="${i}"${done ? " checked" : ""}><span>${inlineMd(m[2])}</span></li>`;
-    } else if ((m = line.match(/^\s*[-*+] (.*)$/))) { open("ul"); html += `<li>${inlineMd(m[1])}</li>`; }
-    else if ((m = line.match(/^\s*\d+[.)] (.*)$/))) { open("ol"); html += `<li>${inlineMd(m[1])}</li>`; }
-    else {
-      close();
-      if ((m = line.match(/^(#{1,3}) (.*)$/))) html += `<h${m[1].length}>${inlineMd(m[2])}</h${m[1].length}>`;
-      else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) html += "<hr>";
-      else if ((m = line.match(/^> ?(.*)$/))) html += `<blockquote>${inlineMd(m[1])}</blockquote>`;
-      else if (!line.trim()) html += `<div class="sp"></div>`;
-      else html += `<p>${inlineMd(line)}</p>`;
+    if (/^\s*```/.test(line)) {
+      closeLists(); const code = []; i++;
+      while (i < lines.length && !/^\s*```/.test(lines[i])) code.push(lines[i++]);
+      html += `<pre><code>${esc(code.join("\n"))}</code></pre>`; continue;
     }
-  });
-  if (code) html += `<pre><code>${esc(code.join("\n"))}</code></pre>`;
-  close();
+    if (line.includes("|") && i + 1 < lines.length && TBL_SEP.test(lines[i + 1]) && lines[i + 1].includes("-")) {
+      closeLists();
+      const head = splitRow(line), al = splitRow(lines[i + 1]).map(c => /^:-+:$/.test(c) ? "center" : /-:$/.test(c) ? "right" : /^:-/.test(c) ? "left" : "");
+      const cell = (tag, c, k) => `<${tag}${al[k] ? ` style="text-align:${al[k]}"` : ""}>${inlineMd(c, opt)}</${tag}>`;
+      html += `<div class="tbl"><table><thead><tr>${head.map((c, k) => cell("th", c, k)).join("")}</tr></thead><tbody>`;
+      i += 2;
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) {
+        const r = splitRow(lines[i]); html += `<tr>${head.map((_, k) => cell("td", r[k] || "", k)).join("")}</tr>`; i++;
+      }
+      i--; html += "</tbody></table></div>"; continue;
+    }
+    if ((m = line.match(/^(\s*)[-*+] \[( |x|X)\] ?(.*)$/))) {
+      openList("ul", indent(m[1])); const done = m[2] !== " ";
+      html += `<li class="todo${done ? " done" : ""}"><input type="checkbox" data-line="${i + (opt.base || 0)}"${done ? " checked" : ""}><span>${inlineMd(m[3], opt)}</span></li>`; continue;
+    }
+    if ((m = line.match(/^(\s*)[-*+] (.*)$/)) && !/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { openList("ul", indent(m[1])); html += `<li>${inlineMd(m[2], opt)}</li>`; continue; }
+    if ((m = line.match(/^(\s*)(\d+)[.)] (.*)$/))) {
+      const lvl = indent(m[1]), fresh = lists.length - 1 < lvl || lists[lvl] !== "ol";
+      openList("ol", lvl);
+      if (fresh && +m[2] !== 1) html = html.replace(/<ol( class="sub")?>$/, `<ol$1 start="${+m[2]}">`);
+      html += `<li>${inlineMd(m[3], opt)}</li>`; continue;
+    }
+    closeLists();
+    if ((m = line.match(/^(#{1,6})\s+(.*)$/))) html += `<h${m[1].length}>${inlineMd(m[2], opt)}</h${m[1].length}>`;
+    else if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) html += "<hr>";
+    else if (/^\s*> ?/.test(line)) {
+      const q = [], base = i;
+      while (i < lines.length && /^\s*> ?/.test(lines[i])) q.push(lines[i++].replace(/^\s*> ?/, ""));
+      i--; html += `<blockquote>${renderMd(q.join("\n"), { ...opt, base: (opt.base || 0) + base })}</blockquote>`;
+    }
+    else if (!line.trim()) html += `<div class="sp"></div>`;
+    else html += `<p>${inlineMd(line, opt)}</p>`;
+  }
+  closeLists();
   return html;
 }
-const plainSnippet = s => String(s).replace(/^\s*[-*+] \[[ xX]\] ?/gm, "☐ ").replace(/[#*`>~_]/g, "").replace(/\s+/g, " ").trim();
+const plainSnippet = s => String(s).replace(/!\[([^\]]*)\]\([^)]*\)/g, "🖼 $1").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/^\s*\|?\s*:?-{2,}[-|: ]*$/gm, "").replace(/\|/g, " ").replace(/^\s*[-*+] \[[ xX]\] ?/gm, "☐ ").replace(/[#*`>~_]/g, "").replace(/\s+/g, " ").trim();
 function todoStats(body) {
   const all = body.match(/^\s*[-*+] \[[ xX]\]/gm) || [];
   return all.length ? `${all.filter(x => /\[[xX]\]/.test(x)).length}/${all.length}` : "";
@@ -792,40 +860,92 @@ const nbName = id => (vault.data.notebooks.find(n => n.id === id) || {}).name ||
 const today = () => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`; };
 
 function noteToTxt(n) { return `${n.title || "Không tiêu đề"}\r\n${"=".repeat(Math.max(3, (n.title || "").length))}\r\n${(n.tags || []).length ? "Thẻ: " + n.tags.join(", ") + "\r\n" : ""}\r\n${n.body.replace(/\r?\n/g, "\r\n")}\r\n`; }
+const ATT_RE = /(!?)\[([^\]]*)\]\(att:([\w-]+)\)/g;
+const attPath = a => `_attachments/${a.id.slice(0, 6)}_${safeName(a.name)}`;
 function noteToMd(n) {
   const fm = `---\ntitle: "${(n.title || "").replace(/"/g, '\\"')}"\nnotebook: "${nbName(n.notebook)}"\ntags: [${(n.tags || []).map(t => `"${t}"`).join(", ")}]\ncreated: ${new Date(n.created).toISOString()}\nupdated: ${new Date(n.updated).toISOString()}\n---\n\n`;
-  return fm + `# ${n.title || "Không tiêu đề"}\n\n${n.body}\n`;
+  const atts = new Map((n.attachments || []).map(a => [a.id, a]));
+  const body = n.body.replace(ATT_RE, (m, bang, txt, id) => atts.has(id) ? `${bang}[${txt}](${encodeURI(attPath(atts.get(id)))})` : m);
+  return fm + `# ${n.title || "Không tiêu đề"}\n\n${body}\n`;
 }
-function noteToHtml(n) {
+async function noteToHtml(n) {
+  const urls = {};
+  for (const a of n.attachments || []) { try { urls[a.id] = `data:${a.type || "application/octet-stream"};base64,${toBase64(await getAttBytes(a))}`; } catch {} }
+  const names = Object.fromEntries((n.attachments || []).map(a => [a.id, a.name]));
   return `<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(n.title)}</title>
 <style>body{font:17px/1.7 system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#1c1917}h1{letter-spacing:-.02em}.meta{color:#78716c;font-size:13px}
 li.todo{list-style:none;margin-left:-1.4em}li.todo.done span{text-decoration:line-through;color:#a8a29e}code{background:#f4f4f3;padding:1px 5px;border-radius:4px}
+pre{background:#f4f4f3;padding:10px;border-radius:8px;overflow:auto}img{max-width:100%;border-radius:8px}table{border-collapse:collapse}th,td{border:1px solid #d6d3cf;padding:5px 10px}th{background:#f4f4f3}
 blockquote{border-left:3px solid #d6d3cf;margin:.3em 0;padding-left:12px;color:#78716c}.sp{height:.8em}p{margin:0}</style></head><body>
 <h1>${esc(n.title || "Không tiêu đề")}</h1><div class="meta">${esc(nbName(n.notebook))} · ${new Date(n.updated).toLocaleString("vi")}${(n.tags || []).length ? " · #" + n.tags.map(esc).join(" #") : ""}</div>
-<div>${renderMd(n.body).replace(/<input type="checkbox"[^>]*?(checked)?>/g, (m, c) => c ? "☑" : "☐")}</div></body></html>`;
+<div>${renderMd(n.body, { att: id => urls[id], attName: id => names[id] }).replace(/<input type="checkbox"[^>]*?(checked)?>/g, (m, c) => c ? "☑" : "☐")}</div></body></html>`;
 }
 /* Evernote ENEX */
-function noteToEnml(n) {
+function enmlLine(l, media) {
+  let out = "", last = 0;
+  for (const m of l.matchAll(ATT_RE)) {
+    const r = media.get(m[3]); if (!r) continue;
+    out += esc(l.slice(last, m.index)) + `<en-media type="${esc(r.type)}" hash="${r.hash}"/>`; last = m.index + m[0].length;
+  }
+  return out + esc(l.slice(last));
+}
+function noteToEnml(n, media = new Map()) {
   const lines = n.body.split(/\r?\n/).map(l => {
     const m = l.match(/^\s*[-*+] \[( |x|X)\] ?(.*)$/);
-    if (m) return `<div><en-todo checked="${m[1] !== " "}"/>${esc(m[2])}</div>`;
-    const h = l.match(/^(#{1,3}) (.*)$/);
-    if (h) return `<h${h[1].length + 1}>${esc(h[2])}</h${h[1].length + 1}>`;
+    if (m) return `<div><en-todo checked="${m[1] !== " "}"/>${enmlLine(m[2], media)}</div>`;
+    const h = l.match(/^(#{1,6}) (.*)$/);
+    if (h) { const k = Math.min(6, h[1].length + 1); return `<h${k}>${enmlLine(h[2], media)}</h${k}>`; }
     const b = l.match(/^\s*[-*+] (.*)$/);
-    if (b) return `<div>• ${esc(b[1])}</div>`;
-    return l.trim() ? `<div>${esc(l)}</div>` : "<div><br/></div>";
+    if (b) return `<div>• ${enmlLine(b[1], media)}</div>`;
+    return l.trim() ? `<div>${enmlLine(l, media)}</div>` : "<div><br/></div>";
   }).join("");
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd"><en-note>${lines}</en-note>`;
 }
-function notesToEnex(notes) {
+async function notesToEnex(notes) {
   const cdata = s => "<![CDATA[" + s.replace(/]]>/g, "]]]]><![CDATA[>") + "]]>";
-  const body = notes.map(n => `<note><title>${esc(n.title || "Không tiêu đề")}</title><content>${cdata(noteToEnml(n))}</content>` +
-    `<created>${stamp(n.created)}</created><updated>${stamp(n.updated)}</updated>${(n.tags || []).map(t => `<tag>${esc(t)}</tag>`).join("")}` +
-    `<note-attributes><source>T17 Notes</source></note-attributes></note>`).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export4.dtd">\n<en-export export-date="${stamp(Date.now())}" application="T17 Notes" version="1.0">\n${body}\n</en-export>\n`;
+  const parts = [];
+  for (const n of notes) {
+    const media = new Map(); let res = "";
+    for (const a of n.attachments || []) {
+      try {
+        const bytes = await getAttBytes(a), type = a.type || "application/octet-stream";
+        media.set(a.id, { type, hash: md5hex(bytes) });
+        res += `<resource><data encoding="base64">${toBase64(bytes)}</data><mime>${esc(type)}</mime><resource-attributes><file-name>${esc(a.name)}</file-name></resource-attributes></resource>`;
+      } catch {}
+    }
+    parts.push(`<note><title>${esc(n.title || "Không tiêu đề")}</title><content>${cdata(noteToEnml(n, media))}</content>` +
+      `<created>${stamp(n.created)}</created><updated>${stamp(n.updated)}</updated>${(n.tags || []).map(t => `<tag>${esc(t)}</tag>`).join("")}` +
+      `<note-attributes><source>T17 Notes</source></note-attributes>${res}</note>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export4.dtd">\n<en-export export-date="${stamp(Date.now())}" application="T17 Notes" version="1.0">\n${parts.join("\n")}\n</en-export>\n`;
+}
+/* MD5 (cho mã băm tài nguyên ENEX) */
+function md5hex(bytes) {
+  const K = new Uint32Array(64), S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+  for (let i = 0; i < 64; i++) K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 2 ** 32);
+  const len = bytes.length, n = ((len + 8) >>> 6) + 1, M = new Uint32Array(n * 16);
+  for (let i = 0; i < len; i++) M[i >> 2] |= bytes[i] << ((i % 4) * 8);
+  M[len >> 2] |= 0x80 << ((len % 4) * 8);
+  M[n * 16 - 2] = (len * 8) >>> 0; M[n * 16 - 1] = Math.floor(len / 0x20000000);
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+  for (let o = 0; o < M.length; o += 16) {
+    let A = a0, B = b0, C = c0, D = d0;
+    for (let i = 0; i < 64; i++) {
+      let F, g;
+      if (i < 16) { F = (B & C) | (~B & D); g = i; }
+      else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+      else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16; }
+      else { F = C ^ (B | ~D); g = (7 * i) % 16; }
+      F = (F + A + K[i] + M[o + g]) | 0; A = D; D = C; C = B;
+      const sh = S[(i >> 4) * 4 + (i % 4)];
+      B = (B + ((F << sh) | (F >>> (32 - sh)))) | 0;
+    }
+    a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+  }
+  return [a0, b0, c0, d0].map(x => Array.from({ length: 4 }, (_, i) => ((x >>> (i * 8)) & 255).toString(16).padStart(2, "0")).join("")).join("");
 }
 function parseEnexDate(s) { const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/.exec(s || ""); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : Date.now(); }
-function enmlToText(enml) {
+function enmlToText(enml, media) {
   const doc = new DOMParser().parseFromString(enml.replace(/<\?xml[^>]*>|<!DOCTYPE[^>]*>/g, ""), "text/html");
   const out = [];
   const walk = (node, line) => {
@@ -835,10 +955,11 @@ function enmlToText(enml) {
       const tag = c.tagName.toLowerCase();
       if (tag === "en-todo") { line.t += (c.getAttribute("checked") === "true" ? "- [x] " : "- [ ] "); walk(c, line); continue; }
       if (tag === "br") { out.push(line.t); line.t = ""; continue; }
-      if (tag === "en-media" || tag === "img") continue;           // không lưu ảnh
+      if (tag === "en-media") { const r = media && media.get((c.getAttribute("hash") || "").toLowerCase()); if (r) line.t += r; continue; }
+      if (tag === "img") continue;
       const block = /^(div|p|h[1-6]|li|tr|blockquote|pre|ul|ol|table)$/.test(tag);
       if (block && line.t) { out.push(line.t); line.t = ""; }
-      if (/^h[1-3]$/.test(tag)) line.t += "#".repeat(+tag[1]) + " ";
+      if (/^h[1-6]$/.test(tag)) line.t += "#".repeat(+tag[1]) + " ";
       if (tag === "li") line.t += c.parentElement?.tagName === "OL" ? "1. " : "- ";
       if (tag === "b" || tag === "strong") { line.t += "**"; walk(c, line); line.t += "**"; continue; }
       if (tag === "i" || tag === "em") { line.t += "*"; walk(c, line); line.t += "*"; continue; }
@@ -849,15 +970,30 @@ function enmlToText(enml) {
   const line = { t: "" }; walk(doc.body.querySelector("en-note") || doc.body, line); if (line.t) out.push(line.t);
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
-function enexToNotes(xmlText, nb) {
+async function enexToNotes(xmlText, nb) {
   const x = new DOMParser().parseFromString(xmlText, "application/xml");
   if (x.querySelector("parsererror")) throw new Error("File .enex không hợp lệ");
-  return Array.from(x.getElementsByTagName("note")).map(n => {
+  const out = [];
+  for (const n of Array.from(x.getElementsByTagName("note"))) {
     const g = t => n.getElementsByTagName(t)[0]?.textContent || "";
-    return { id: uid(), title: g("title"), body: enmlToText(g("content")), notebook: nb, pinned: false, deleted: null,
+    const note = { id: uid(), title: g("title"), notebook: nb, pinned: false, deleted: null, attachments: [],
       tags: Array.from(n.getElementsByTagName("tag"), t => t.textContent.trim()).filter(Boolean),
       created: parseEnexDate(g("created")), updated: parseEnexDate(g("updated") || g("created")) };
-  });
+    const media = new Map();
+    for (const r of Array.from(n.getElementsByTagName("resource"))) {
+      try {
+        const bytes = b64d((r.getElementsByTagName("data")[0]?.textContent || "").replace(/\s+/g, ""));
+        if (!bytes.length || bytes.length > ATT_MAX) continue;
+        const type = r.getElementsByTagName("mime")[0]?.textContent || "application/octet-stream";
+        const name = r.getElementsByTagName("file-name")[0]?.textContent || ("tep." + (type.split("/")[1] || "bin"));
+        const a = await storeAttachment(name, type, bytes);
+        note.attachments.push(a); media.set(md5hex(bytes), attMd(a));
+      } catch {}
+    }
+    note.body = enmlToText(g("content"), media);
+    out.push(note);
+  }
+  return out;
 }
 
 /* Tải về / chia sẻ file (điện thoại: ưu tiên bảng Chia sẻ của hệ điều hành) */
@@ -1021,7 +1157,7 @@ $("lockRestore").onclick = async () => {
   try {
     const r = await vault.unlockString(str, pw); Object.assign(vault, r);
     if (!Array.isArray(vault.data.books)) vault.data.books = [];
-    await absorbBookTexts(vault.data); await vault.save(); await cleanupOrphanBooks();
+    await absorbBookTexts(vault.data); await absorbAttTexts(vault.data); await vault.save(); await cleanupOrphanBooks();
     closeLayer(); enterApp();
     toast(`Đã khôi phục ${vault.data.notes.filter(n => !n.deleted).length} ghi chú, ${vault.data.books.length} sách.`);
   }
@@ -1034,6 +1170,7 @@ function enterApp() {
   $("scrLock").hidden = true; $("scrMain").hidden = false;
   $("lockPw").value = ""; $("lockPw2").value = "";
   if (!Array.isArray(vault.data.books)) vault.data.books = [];
+  setTimeout(() => cleanupOrphanBooks().catch(() => {}), 1500);           // dọn dữ liệu mồ côi
   if (!vault.data.notebooks.length) { const nb = { id: uid(), name: "Ghi chú chung" }; vault.data.notebooks.push(nb); vault.data.defaultNb = nb.id; }
   setTab(view.tab); renderNotes(); resetIdle();
 }
@@ -1117,7 +1254,7 @@ $("noteList").onclick = async e => {
       { label: "Xóa vĩnh viễn", value: "kill", icon: "i-trash", danger: true }] });
     if (a === "restore") { n.deleted = null; persist(); renderNotes(); toast("Đã khôi phục."); }
     if (a === "kill" && await dialog({ title: "Xóa vĩnh viễn?", message: "Không thể hoàn tác.", ok: "Xóa", danger: true })) {
-      vault.data.notes = vault.data.notes.filter(x => x !== n); persist(); renderNotes();
+      vault.data.notes = vault.data.notes.filter(x => x !== n); persist().then(cleanupOrphanBooks); renderNotes();
     }
     return;
   }
@@ -1126,7 +1263,7 @@ $("noteList").onclick = async e => {
 async function emptyTrash() {
   const n = vault.data.notes.filter(x => x.deleted).length;
   if (!n || !await dialog({ title: `Xóa vĩnh viễn ${n} ghi chú?`, message: "Không thể hoàn tác.", ok: "Xóa hết", danger: true })) return;
-  vault.data.notes = vault.data.notes.filter(x => !x.deleted); persist(); renderNotes();
+  vault.data.notes = vault.data.notes.filter(x => !x.deleted); persist().then(cleanupOrphanBooks); renderNotes();
 }
 $("btnSearch").onclick = () => {
   const bar = $("searchBar"); bar.hidden = !bar.hidden; $("btnSearch").classList.toggle("on", !bar.hidden);
@@ -1194,7 +1331,7 @@ function openEditor(n, isNew = false) {
   $("edNotebook").querySelector("span").textContent = nbName(n.notebook);
   $("edPin").classList.toggle("on", !!n.pinned);
   $("edStatus").textContent = isNew ? "Ghi chú mới" : "";
-  updateEdDate();
+  updateEdDate(); renderAtts();
   $("scrEditor").hidden = false;
   setEditMode(isNew || !n.body.trim());
   $("edBody").scrollTop = 0;
@@ -1205,7 +1342,7 @@ function setEditMode(on) {
   ed.editing = on;
   $("edText").hidden = !on; $("fmtBar").hidden = !on;
   $("edView").hidden = on;
-  if (!on) $("edView").innerHTML = renderMd(ed.note.body) || `<p style="color:var(--faint)">(Trống — bấm biểu tượng bút để viết)</p>`;
+  if (!on) { $("edView").innerHTML = renderMd(ed.note.body) || `<p style="color:var(--faint)">(Trống — bấm biểu tượng bút để viết)</p>`; hydrateMd($("edView")); }
   $("edMode").innerHTML = `<svg><use href="#${on ? "i-eye" : "i-edit"}"/></svg>`;
   $("edMode").title = on ? "Xem" : "Sửa";
   if (on) autoGrow();
@@ -1227,7 +1364,73 @@ function scheduleSave() { $("edStatus").textContent = "Đang lưu…"; clearTime
 function flushEdit() { if (ed.timer) { clearTimeout(ed.timer); ed.timer = null; commitEdit(); } }
 ["edTitle", "edText", "edTags"].forEach(id => $(id).addEventListener("input", scheduleSave));
 function autoGrow() { const t = $("edText"); t.style.height = "auto"; t.style.height = Math.max(t.scrollHeight, window.innerHeight * 0.55) + "px"; }
-$("edText").addEventListener("input", autoGrow);
+$("edText").addEventListener("input", () => { autoGrow(); ensureCaretVisible(); });
+/* giữ con trỏ luôn nằm trên bàn phím / thanh định dạng */
+let caretT = 0;
+function caretTop(t) {
+  const m = document.createElement("div"), cs = getComputedStyle(t);
+  for (const k of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "paddingLeft", "paddingRight", "paddingTop", "borderLeftWidth", "borderRightWidth", "tabSize", "textIndent"]) m.style[k] = cs[k];
+  Object.assign(m.style, { position: "absolute", visibility: "hidden", whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: cs.wordBreak, boxSizing: "border-box", width: t.clientWidth + "px", top: "0", left: "-9999px" });
+  m.textContent = t.value.slice(0, t.selectionEnd);
+  const sp = document.createElement("span"); sp.textContent = "​"; m.appendChild(sp);
+  document.body.appendChild(m); const y = sp.offsetTop, h = sp.offsetHeight || parseFloat(cs.lineHeight) || 24; m.remove();
+  return { y, h };
+}
+function ensureCaretVisible(delay = 0) {
+  clearTimeout(caretT);
+  caretT = setTimeout(() => {
+    const t = $("edText"), body = $("edBody");
+    if ($("scrEditor").hidden || !ed.editing || document.activeElement !== t) return;
+    const { y, h } = caretTop(t), tr = t.getBoundingClientRect(), br = body.getBoundingClientRect();
+    const top = tr.top + y, bottom = top + h, pad = 28;
+    if (bottom > br.bottom - pad) body.scrollTop += bottom - (br.bottom - pad);
+    else if (top < br.top + 8) body.scrollTop -= (br.top + 8) - top;
+  }, delay);
+}
+["click", "keyup", "focus"].forEach(ev => $("edText").addEventListener(ev, () => ensureCaretVisible(ev === "focus" ? 320 : 0)));
+$("edText").addEventListener("paste", e => {          // dán ảnh trực tiếp vào ghi chú
+  const files = Array.from(e.clipboardData?.files || []).filter(f => f.type.startsWith("image/"));
+  if (files.length) { e.preventDefault(); addFilesToNote(files); }
+});
+$("edBody").addEventListener("dragover", e => { if (ed.editing && e.dataTransfer?.types?.includes("Files")) e.preventDefault(); });
+$("edBody").addEventListener("drop", e => { const f = Array.from(e.dataTransfer?.files || []); if (f.length && ed.editing) { e.preventDefault(); addFilesToNote(f); } });
+/* hiển thị ảnh / tệp đính kèm */
+async function hydrateMd(root) {
+  for (const img of root.querySelectorAll("img[data-att]")) {
+    const a = findAtt(img.dataset.att);
+    if (!a) { img.alt = "(thiếu ảnh)"; continue; }
+    attUrl(a).then(u => { if (img.isConnected) img.src = u; }, () => { img.alt = "(không mở được ảnh)"; });
+  }
+}
+async function downloadAtt(a) {
+  try { const b = await getAttBytes(a); deliver(new Blob([b], { type: a.type || "application/octet-stream" }), a.name); }
+  catch (e) { toast(e.message); }
+}
+async function showImg(a) { try { const box = $("imgBox"); box.querySelector("img").src = await attUrl(a); box.hidden = false; } catch (e) { toast(e.message); } }
+$("imgBox").onclick = () => { $("imgBox").hidden = true; $("imgBox").querySelector("img").removeAttribute("src"); };
+function renderAtts() {
+  const list = (ed.note && ed.note.attachments) || [];
+  $("edAtts").innerHTML = list.map(a => `<button class="chip" data-id="${esc(a.id)}">${isImg(a) ? "🖼" : "📎"} <span>${esc(a.name)}</span> <small style="color:var(--faint)">${fmtSize(a.size || 0)}</small></button>`).join("");
+}
+$("edAtts").onclick = async e => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  const n = ed.note, a = (n.attachments || []).find(x => x.id === c.dataset.id); if (!a) return;
+  const act = await sheet({ title: a.name, items: [
+    ...(isImg(a) ? [{ label: "Xem ảnh", value: "view", icon: "i-eye" }] : []),
+    { label: "Tải xuống / lưu ra máy", sub: "Tệp được giải mã khi lưu", value: "dl", icon: "i-down" },
+    { label: "Chèn lại vào nội dung", value: "ins", icon: "i-plus" },
+    { label: "Xóa tệp đính kèm", value: "del", icon: "i-trash", danger: true }] });
+  if (act === "view") showImg(a);
+  if (act === "dl") downloadAtt(a);
+  if (act === "ins") { if (!ed.editing) setEditMode(true); const t = $("edText"); t.setRangeText(attMd(a), t.selectionStart, t.selectionEnd, "end"); scheduleSave(); autoGrow(); }
+  if (act === "del" && await dialog({ title: "Xóa tệp đính kèm?", message: a.name, ok: "Xóa", danger: true })) {
+    n.attachments = n.attachments.filter(x => x !== a);
+    const re = new RegExp(`!?\\[[^\\]]*\\]\\(att:${a.id}\\)\\n?`, "g");
+    $("edText").value = $("edText").value.replace(re, ""); n.body = $("edText").value;
+    renderAtts(); if (!ed.editing) setEditMode(false);
+    commitEdit(); saveChain.then(cleanupOrphanBooks);
+  }
+};
 $("edText").addEventListener("keydown", e => {           // Enter tiếp tục danh sách / việc cần làm
   if (e.key !== "Enter" || e.shiftKey) return;
   const t = e.target, pos = t.selectionStart, start = t.value.lastIndexOf("\n", pos - 1) + 1, line = t.value.slice(start, pos);
@@ -1253,6 +1456,8 @@ $("edNotebook").onclick = async () => {
   ed.note.notebook = id; $("edNotebook").querySelector("span").textContent = nbName(id); scheduleSave();
 };
 $("edView").addEventListener("click", e => {           // bấm ô vuông để đánh dấu hoàn thành
+  const at = e.target.closest("[data-att]");
+  if (at) { e.preventDefault(); const a = findAtt(at.dataset.att); if (!a) { toast("Không tìm thấy tệp."); return; } if (at.tagName === "IMG") showImg(a); else downloadAtt(a); return; }
   const cb = e.target.closest("input[type=checkbox]"); if (!cb) return;
   const lines = ed.note.body.split(/\r?\n/), i = +cb.dataset.line;
   lines[i] = lines[i].replace(/\[( |x|X)\]/, cb.checked ? "[x]" : "[ ]");
@@ -1276,7 +1481,7 @@ $("edMore").onclick = async () => {
   }
   if (a === "copy") copyText(`${n.title}\n\n${n.body}`);
   if (a === "export") { if (ed.isNew) commitEdit(); exportNotes([n], n.title); }
-  if (a === "dup") { const c = { ...n, id: uid(), title: (n.title || "") + " (bản sao)", created: Date.now(), updated: Date.now(), tags: [...(n.tags || [])] }; vault.data.notes.push(c); persist(); openEditor(c); toast("Đã nhân bản."); }
+  if (a === "dup") { const c = { ...n, id: uid(), title: (n.title || "") + " (bản sao)", created: Date.now(), updated: Date.now(), tags: [...(n.tags || [])], attachments: (n.attachments || []).map(a => ({ ...a })) }; vault.data.notes.push(c); persist(); openEditor(c); toast("Đã nhân bản."); }
   if (a === "del") {
     if (!ed.isNew) { n.deleted = Date.now(); persist(); }
     $("scrEditor").hidden = true; ed.note = null; renderNotes(); toast("Đã chuyển vào thùng rác.");
@@ -1295,7 +1500,7 @@ $("fmtBar").onclick = e => {
   const ls = v.lastIndexOf("\n", s - 1) + 1;
   const prefix = p => {                           // thêm/bỏ tiền tố đầu dòng
     const le = v.indexOf("\n", ls); const line = v.slice(ls, le < 0 ? v.length : le);
-    const stripped = line.replace(/^(\s*)([-*+] \[[ xX]\] |[-*+] |\d+[.)] |#{1,3} |> )/, "$1");
+    const stripped = line.replace(/^(\s*)([-*+] \[[ xX]\] |[-*+] |\d+[.)] |#{1,6} |> )/, "$1");
     const next = line.startsWith(p) ? stripped : p + stripped;
     t.setRangeText(next, ls, le < 0 ? v.length : le, "end");
   };
@@ -1303,13 +1508,24 @@ $("fmtBar").onclick = e => {
   ({ todo: () => prefix("- [ ] "), ul: () => prefix("- "), ol: () => prefix("1. "), h: () => prefix("## "), q: () => prefix("> "),
      b: () => wrap("**"), i: () => wrap("*"), s: () => wrap("~~"),
      hr: () => t.setRangeText("\n---\n", s, en, "end"),
+     img: () => pickFiles("image/*").then(addFilesToNote),
+     file: () => pickFiles("").then(addFilesToNote),
+     table: () => t.setRangeText((ls === s ? "" : "\n") + "| Cột 1 | Cột 2 | Cột 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |\n", s, en, "end"),
+     link: () => { const sel = v.slice(s, en); const isUrl = /^https?:\/\//.test(sel); const txt = isUrl ? "liên kết" : sel || "liên kết", url = isUrl ? sel : "https://";
+       t.setRangeText(`[${txt}](${url})`, s, en, "end"); const p = s + txt.length + 3; isUrl ? t.setSelectionRange(s + 1, s + 1 + txt.length) : t.setSelectionRange(p + url.length, p + url.length); },
+     code: () => { const sel = v.slice(s, en); if (sel.includes("\n")) t.setRangeText("```\n" + sel + "\n```", s, en, "end"); else wrap("`"); },
      date: () => t.setRangeText(new Date().toLocaleString("vi", { dateStyle: "short", timeStyle: "short" }), s, en, "end") })[b.dataset.f]();
-  t.focus(); scheduleSave(); autoGrow();
+  t.focus(); scheduleSave(); autoGrow(); ensureCaretVisible();
 };
-/* đẩy thanh định dạng lên trên bàn phím (iOS) */
+/* co khung ứng dụng theo vùng nhìn thấy (khi bàn phím ảo bật) để thanh định dạng & con trỏ không bị che */
 if (window.visualViewport) {
-  const fix = () => { const off = window.innerHeight - visualViewport.height - visualViewport.offsetTop; $("fmtBar").style.transform = off > 40 ? `translateY(${-off}px)` : ""; };
-  visualViewport.addEventListener("resize", fix); visualViewport.addEventListener("scroll", fix);
+  const vv = window.visualViewport, rs = document.documentElement.style;
+  const fit = () => {
+    rs.setProperty("--vvh", vv.height + "px"); rs.setProperty("--vvt", vv.offsetTop + "px");
+    if (window.scrollY) window.scrollTo(0, 0);
+    ensureCaretVisible(30);
+  };
+  vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); fit();
 }
 
 /* ---------------- xuất ---------------- */
@@ -1325,17 +1541,29 @@ async function exportNotes(notes, label) {
     { label: "File mã hóa T17 (.txt)", sub: "Mở bằng T17 Studio / encryp.py với mật khẩu chính", value: "t17" }] });
   if (!a) return;
   const nbDir = n => safeName(nbName(n.notebook)) + "/";
-  if (a === "enex") return deliver(new Blob([notesToEnex(notes)], { type: "application/xml" }), base + ".enex");
+  if (a === "enex") { busy("Đang xuất…"); const x = await notesToEnex(notes); closeLayer(); return deliver(new Blob([x], { type: "application/xml" }), base + ".enex"); }
   if (a === "t17") {
     const txt = notes.map(n => noteToTxt(n)).join("\r\n\r\n────────────\r\n\r\n");
     const enc = await encryptT17(new TextEncoder().encode(txt), vault.key, vault.salt);
     return deliver(new Blob([enc], { type: "text/plain" }), base + "_ma_hoa.txt");
   }
   const conv = { md: [noteToMd, ".md", "text/markdown"], txt: [noteToTxt, ".txt", "text/plain"], html: [noteToHtml, ".html", "text/html"] }[a];
-  if (one) return deliver(new Blob([conv[0](notes[0])], { type: conv[2] + ";charset=utf-8" }), base + conv[1]);
-  const zip = new ZipWriter();
-  notes.forEach(n => zip.add(nbDir(n) + safeName(n.title) + conv[1], conv[0](n)));
-  return deliver(zip.blob(), base + "_" + a + ".zip");
+  const withAtts = a === "md" && notes.some(n => (n.attachments || []).length);
+  busy("Đang xuất…");
+  try {
+    if (one && !withAtts) { const t = await conv[0](notes[0]); closeLayer(); return deliver(new Blob([t], { type: conv[2] + ";charset=utf-8" }), base + conv[1]); }
+    const zip = new ZipWriter(), done = new Set();
+    for (const n of notes) {
+      const dir = one ? "" : nbDir(n);
+      zip.add(dir + safeName(n.title) + conv[1], await conv[0](n));
+      if (a === "md") for (const at of n.attachments || []) {
+        if (done.has(dir + at.id)) continue; done.add(dir + at.id);
+        try { zip.add(dir + attPath(at), await getAttBytes(at)); } catch {}
+      }
+    }
+    closeLayer();
+    return deliver(zip.blob(), base + "_" + a + ".zip");
+  } catch (e) { closeLayer(); toast("Lỗi xuất: " + e.message); }
 }
 
 /* ---------------- nhập ---------------- */
@@ -1350,7 +1578,7 @@ async function importFiles() {
       if (/\.(enex|xml)$/i.test(f.name) || /<en-export/.test(text.slice(0, 500))) {
         let nb = vault.data.notebooks.find(n => n.name === f.name.replace(/\.\w+$/, ""));
         if (!nb) { nb = { id: uid(), name: f.name.replace(/\.\w+$/, "") }; vault.data.notebooks.push(nb); }
-        const ns = enexToNotes(text, nb.id); vault.data.notes.push(...ns); added += ns.length; continue;
+        const ns = await enexToNotes(text, nb.id); vault.data.notes.push(...ns); added += ns.length; continue;
       }
       if (isT17Text(bytes)) {
         const parsed = parseT17(bytes);
@@ -1363,6 +1591,7 @@ async function importFiles() {
           if (j && j.t17notes === 1) {                           // bản sao lưu: gộp, giữ bản mới hơn
             const have = new Map(vault.data.notes.map(n => [n.id, n]));
             j.notebooks.forEach(nb => { if (!vault.data.notebooks.some(x => x.id === nb.id)) vault.data.notebooks.push(nb); });
+            await absorbAttTexts(j);
             j.notes.forEach(n => { const o = have.get(n.id); if (!o) { vault.data.notes.push(n); added++; } else if (n.updated > o.updated) { Object.assign(o, n); added++; } });
             for (const b of j.books || []) {
               const o = vault.data.books.find(x => x.id === b.id);
@@ -1439,9 +1668,81 @@ async function absorbBookTexts(src) {                 // ghi nội dung sách t�
   if (!texts) return;
   for (const b of src.books || []) if (texts[b.id] != null) await putBookText(b, texts[b.id]);
 }
-async function cleanupOrphanBooks() {
-  const keep = new Set((vault.data?.books || []).map(b => "book:" + b.id));
-  for (const k of await store.keys()) if (k.startsWith("book:") && !keep.has(k)) await store.del(k);
+async function cleanupOrphanBooks() {             // xóa dữ liệu sách / tệp đính kèm không còn được dùng
+  if (!vault.data) return;
+  const keep = new Set((vault.data.books || []).map(b => "book:" + b.id));
+  for (const n of [...(vault.data.notes || []), ed.note].filter(Boolean)) for (const a of n.attachments || []) keep.add("att:" + a.id);
+  for (const k of await store.keys()) if ((k.startsWith("book:") || k.startsWith("att:")) && !keep.has(k)) { await store.del(k); dropAttUrl(k.slice(4)); }
+}
+
+/* ---------------- tệp đính kèm / ảnh (mã hóa riêng từng tệp) ----------------
+   Lưu "att:<id>" trong IndexedDB, mã hóa AES-256-GCM bằng khóa ngẫu nhiên dk; dk nằm trong sổ (đã mã hóa bằng mật khẩu chính). */
+const ATT_MAX = 25 * 1024 * 1024;
+const attUrls = new Map();
+const attKey = a => crypto.subtle.importKey("raw", b64d(a.dk), "AES-GCM", false, ["encrypt", "decrypt"]);
+async function putAtt(a, bytes) { await store.set("att:" + a.id, await encryptT17(bytes, await attKey(a), crypto.getRandomValues(new Uint8Array(16)))); }
+async function getAttBytes(a) {
+  const blob = await store.get("att:" + a.id);
+  if (!blob) throw new Error("Không tìm thấy tệp đính kèm trên máy này.");
+  return decryptWith(parseT17(new TextEncoder().encode(blob)), await attKey(a));
+}
+async function storeAttachment(name, type, bytes) {
+  const a = { id: uid(), name: String(name || "tep").slice(0, 120), type: type || "application/octet-stream", size: bytes.length, dk: toBase64(crypto.getRandomValues(new Uint8Array(32))) };
+  await putAtt(a, bytes); return a;
+}
+function findAtt(id) {
+  const own = ed.note && (ed.note.attachments || []).find(a => a.id === id);
+  if (own) return own;
+  for (const n of vault.data?.notes || []) { const a = (n.attachments || []).find(x => x.id === id); if (a) return a; }
+  return null;
+}
+async function attUrl(a) {
+  if (!attUrls.has(a.id)) attUrls.set(a.id, getAttBytes(a).then(b => URL.createObjectURL(new Blob([b], { type: a.type }))));
+  try { return await attUrls.get(a.id); } catch (e) { attUrls.delete(a.id); throw e; }
+}
+function dropAttUrl(id) { const p = attUrls.get(id); if (p) { p.then(u => URL.revokeObjectURL(u), () => {}); attUrls.delete(id); } }
+function clearAttUrls() { for (const id of [...attUrls.keys()]) dropAttUrl(id); }
+const isImg = a => /^image\/(png|jpe?g|gif|webp|bmp|svg\+xml|avif)$/i.test(a.type || "");
+const attMd = a => isImg(a) ? `![${a.name.replace(/[\[\]]/g, "")}](att:${a.id})` : `[📎 ${a.name.replace(/[\[\]]/g, "")}](att:${a.id})`;
+const fmtSize = n => n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(0) + " KB" : (n / 1048576).toFixed(1) + " MB";
+async function compressImage(file) {                 // thu nhỏ ảnh lớn để tiết kiệm bộ nhớ
+  if (!/^image\/(jpeg|png|webp|bmp)$/i.test(file.type) || !window.createImageBitmap) return null;
+  let bmp; try { bmp = await createImageBitmap(file); } catch { return null; }
+  const MAX = 1600, big = Math.max(bmp.width, bmp.height);
+  if (big <= MAX && file.size <= 1.2 * 1048576) { bmp.close && bmp.close(); return null; }
+  const k = Math.min(1, MAX / big), c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height);
+  bmp.close && bmp.close();
+  const out = await new Promise(r => c.toBlob(r, "image/jpeg", 0.82));
+  return out && out.size < file.size ? out : null;
+}
+async function addFilesToNote(files) {
+  if (!ed.note || !files.length) return;
+  if (!ed.editing) setEditMode(true);
+  busy("Đang mã hóa tệp…");
+  const refs = [];
+  try {
+    for (const f of files) {
+      let blob = f, type = f.type || "application/octet-stream", name = f.name || "tep";
+      const c = await compressImage(f);
+      if (c) { blob = c; type = "image/jpeg"; name = name.replace(/\.\w+$/, "") + ".jpg"; }
+      if (blob.size > ATT_MAX) { toast(`“${name}” quá lớn (tối đa 25 MB).`); continue; }
+      const a = await storeAttachment(name, type, new Uint8Array(await blob.arrayBuffer()));
+      (ed.note.attachments ||= []).push(a); refs.push(attMd(a));
+    }
+  } catch (e) { toast("Không thêm được tệp: " + e.message); }
+  closeLayer();
+  if (!refs.length) return;
+  const t = $("edText"), s = t.selectionStart, v = t.value;
+  const pre = s > 0 && v[s - 1] !== "\n" ? "\n" : "";
+  t.setRangeText(pre + refs.join("\n") + "\n", s, t.selectionEnd, "end");
+  renderAtts(); scheduleSave(); autoGrow(); ensureCaretVisible();
+}
+async function absorbAttTexts(src) {
+  const texts = src.attTexts; delete src.attTexts;
+  if (!texts) return;
+  for (const n of src.notes || []) for (const a of n.attachments || []) if (texts[a.id] != null && !(await store.get("att:" + a.id))) await putAtt(a, b64d(texts[a.id]));
 }
 
 /* ---------------- giải mã file ngoài (T17Studio / encryp.py) ---------------- */
@@ -2584,7 +2885,9 @@ $("setBackup").onclick = async () => {
   try {
     const bookTexts = {};
     for (const b of vault.data.books) { try { bookTexts[b.id] = await getBookText(b); } catch {} }
-    const str = await encryptT17(new TextEncoder().encode(JSON.stringify({ ...vault.data, bookTexts })), vault.key, vault.salt);
+    const attTexts = {};
+    for (const n of vault.data.notes) for (const a of n.attachments || []) { if (!(a.id in attTexts)) try { attTexts[a.id] = toBase64(await getAttBytes(a)); } catch {} }
+    const str = await encryptT17(new TextEncoder().encode(JSON.stringify({ ...vault.data, bookTexts, attTexts })), vault.key, vault.salt);
     closeLayer();
     deliver(new Blob([str], { type: "text/plain" }), `T17_Notes_saoluu_${today()}.txt`);
   } catch (e) { closeLayer(); toast("Không tạo được bản sao lưu: " + e.message); }
@@ -2604,7 +2907,7 @@ function lockNow() {
   if (bookOpen()) closeBook(true);
   closeFolder();
   saveChain.then(() => {
-    vault.lock(); ext.keys = new Map(); ext.pw = null;
+    vault.lock(); ext.keys = new Map(); ext.pw = null; clearAttUrls(); $("imgBox").click(); $("edAtts").innerHTML = "";
     $("noteList").innerHTML = ""; $("readList").innerHTML = ""; $("edText").value = ""; $("edView").innerHTML = "";
     showLock();
   });
@@ -2626,6 +2929,7 @@ window.addEventListener("pagehide", () => flushEdit());
 window.t17SaveResult = (ok, name) => toast(ok ? "Đã lưu: " + name : "Chưa lưu file.");
 window.t17Back = () => {
   if ($("layer").innerHTML) { if (!$("layer").querySelector(".spin")) closeLayer(null); return "ok"; }
+  if (!$("imgBox").hidden) { $("imgBox").click(); return "ok"; }
   if (!$("scrEditor").hidden) { closeEditor(); return "ok"; }
   if (bookOpen()) {
     if (!$("selBar").hidden) hideSelBar();
